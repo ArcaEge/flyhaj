@@ -21,7 +21,7 @@
   let maxJerk = $state(0);
   let firstJerk = $state(0);
 
-  let lastThrowEndTime: number | null = $state(null);
+  let lastThrowTime: number | null = $state(null);
   let lastLandTime: number | null = $state(null);
   let airTime: number | null = $state(null);
 
@@ -83,6 +83,7 @@
           (!lastLandTime || now - lastLandTime >= DEBOUNCE_THROW_TIME_MS)
         ) {
           phase = 1;
+          lastThrowTime = now;
         }
       } else if (phase === 1) {
         if (
@@ -91,14 +92,13 @@
           currentAccel <= 11
         ) {
           phase = 2;
-          lastThrowEndTime = now;
         }
       } else if (phase === 2) {
         if (jerk > LAND_JERK_THRESHOLD && jerkY < 10000) {
           phase = 0;
           lastLandTime = now;
 
-          airTime = lastThrowEndTime ? now - lastThrowEndTime : null;
+          airTime = lastThrowTime ? now - lastThrowTime : null;
         }
       }
 
@@ -225,7 +225,7 @@
       maxJerk = 0;
       firstJerk = 0;
 
-      lastThrowEndTime = null;
+      lastThrowTime = null;
       lastLandTime = null;
       airTime = null;
 
@@ -297,5 +297,5 @@
   overall velocity max: {velOverallMax}
   <br />
   <br />
-  air time: {airTime ? airTime / 1000 + 's' : 'chuck it first '}
+  air time: {airTime ? airTime / 1000 + "s" : "chuck it first "}
 </div>
