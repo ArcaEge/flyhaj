@@ -2,13 +2,28 @@
   import { onMount } from "svelte";
   import Quaternion from "quaternion";
 
+  const THROW_JERK_THRESHOLD = 0.1;
+  const THROW_ACCEL_THRESHOLD = 1.5;
+  const THROW_END_JERK_THRESHOLD = 0.008;
+  const LAND_JERK_THRESHOLD = 0.2;
+  const DEBOUNCE_THROW_TIME_MS = 3000;
+
   let accel: number | null = $state(null);
+  let accelY: number | null = $state(null);
   let maxAccel = $state(0);
   let accelTime = $state(0);
 
+  // 0 = idle, 1 = throwing, 2 = wheeeee
+  let phase = $state(0);
+
   let jerk = $state(0);
+  let jerkY = $state(0);
   let maxJerk = $state(0);
   let firstJerk = $state(0);
+
+  let lastThrowEndTime: number | null = $state(null);
+  let lastLandTime: number | null = $state(null);
+  let airTime: number | null = $state(null);
 
   let angleAlpha = $state(0);
   let angleBeta = $state(0);
@@ -45,10 +60,46 @@
           event.acceleration.z ** 2
       );
 
+      const lastTime = accelTime;
+      accelTime = Date.now();
+
       if (accel !== null) {
-        const lastTime = accelTime;
-        accelTime = Date.now();
         jerk = Math.abs(currentAccel - accel) * ((accelTime - lastTime) / 1000);
+      }
+
+      if (accelY !== null) {
+        jerkY =
+          Math.abs(event.acceleration.y - accelY) *
+          ((accelTime - lastTime) / 1000);
+      }
+
+      // Phases
+      let now = Date.now();
+      if (phase === 0) {
+        if (
+          jerk > THROW_JERK_THRESHOLD &&
+          currentAccel > THROW_ACCEL_THRESHOLD &&
+          jerk < 100000 &&
+          (!lastLandTime || now - lastLandTime >= DEBOUNCE_THROW_TIME_MS)
+        ) {
+          phase = 1;
+        }
+      } else if (phase === 1) {
+        if (
+          jerk < THROW_END_JERK_THRESHOLD &&
+          7 <= currentAccel &&
+          currentAccel <= 11
+        ) {
+          phase = 2;
+          lastThrowEndTime = now;
+        }
+      } else if (phase === 2) {
+        if (jerk > LAND_JERK_THRESHOLD && jerkY < 10000) {
+          phase = 0;
+          lastLandTime = now;
+
+          airTime = lastThrowEndTime ? now - lastThrowEndTime : null;
+        }
       }
 
       // Magic quarternion shit to calculate global acceleration
@@ -58,15 +109,16 @@
 
       const quarternion = Quaternion.fromEuler(a, b, -g, "ZXY").normalize();
 
-      const [accelX, accelY, accelZ] = quarternion.rotateVector([
-        event.acceleration.x,
-        event.acceleration.y,
-        event.acceleration.z,
-      ]);
+      const [_rotatedAccelX, _rotatedAccelY, _rotatedAccelZ] =
+        quarternion.rotateVector([
+          event.acceleration.x,
+          event.acceleration.y,
+          event.acceleration.z,
+        ]);
 
-      rotatedAccelX = accelX;
-      rotatedAccelY = accelY;
-      rotatedAccelZ = accelZ;
+      rotatedAccelX = _rotatedAccelX;
+      rotatedAccelY = _rotatedAccelY;
+      rotatedAccelZ = _rotatedAccelZ;
 
       // console.log(currentAccel);
 
@@ -74,7 +126,7 @@
         if (!oscillatorState) {
           oscillator = audioCtx.createOscillator();
 
-          oscillator.type = "square";
+          oscillator.type = "sine";
           oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
           oscillator.connect(audioCtx.destination);
 
@@ -98,9 +150,9 @@
         rotatedAccelZMax = Math.abs(rotatedAccelZ);
       }
 
-      velX += accelX * (event.interval / 1000);
-      velY += accelY * (event.interval / 1000);
-      velZ += accelZ * (event.interval / 1000);
+      velX += rotatedAccelX * (event.interval / 1000);
+      velY += rotatedAccelY * (event.interval / 1000);
+      velZ += rotatedAccelZ * (event.interval / 1000);
       velOverall = Math.sqrt(velX ** 2 + velY ** 2 + velZ ** 2);
 
       if (Math.abs(velX) > velXMax) {
@@ -117,6 +169,7 @@
       }
 
       accel = currentAccel;
+      accelY = event.acceleration.y;
 
       if (accel > maxAccel) {
         maxAccel = accel;
@@ -125,7 +178,12 @@
       if (jerk > maxJerk && jerk < 100000) {
         maxJerk = jerk;
       }
-      if (jerk > 0.1 && firstJerk === 0 && accel < maxAccel - 0.1 && jerk < 100000) {
+      if (
+        jerk > 0.1 &&
+        firstJerk === 0 &&
+        accel < maxAccel - 0.1 &&
+        jerk < 100000
+      ) {
         firstJerk = maxJerk;
       }
 
@@ -145,11 +203,54 @@
   });
 </script>
 
-<div class="m-2">
+<div
+  class="p-2"
+  class:bg-yellow-300={phase === 1}
+  class:bg-green-300={phase === 2}
+>
   <h2>Blahaj chucking thing</h2>
 
-  <button class="block bg-amber-900 text-amber-50 p-2 my-2 rounded-lg"
-    >do the whee whee</button
+  <button
+    class="block bg-amber-900 text-amber-50 p-2 my-2 rounded-lg"
+    onclick={() => {
+      accel = null;
+      accelY = null;
+      maxAccel = 0;
+      accelTime = 0;
+
+      phase = 0;
+
+      jerk = 0;
+      jerkY = 0;
+      maxJerk = 0;
+      firstJerk = 0;
+
+      lastThrowEndTime = null;
+      lastLandTime = null;
+      airTime = null;
+
+      angleAlpha = 0;
+      angleBeta = 0;
+      angleGamma = 0;
+
+      rotatedAccelX = 0;
+      rotatedAccelY = 0;
+      rotatedAccelZ = 0;
+
+      rotatedAccelXMax = 0;
+      rotatedAccelYMax = 0;
+      rotatedAccelZMax = 0;
+
+      velX = 0;
+      velY = 0;
+      velZ = 0;
+      velOverall = 0;
+
+      velXMax = 0;
+      velYMax = 0;
+      velZMax = 0;
+      velOverallMax = 0;
+    }}>reset</button
   >
 
   accel: {accel}
@@ -194,4 +295,7 @@
   z velocity max: {velZMax}
   <br />
   overall velocity max: {velOverallMax}
+  <br />
+  <br />
+  air time: {airTime ? airTime / 1000 + 's' : 'chuck it first '}
 </div>
