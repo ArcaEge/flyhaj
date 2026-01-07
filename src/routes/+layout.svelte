@@ -8,5 +8,8 @@
 <svelte:head>
 	<link rel="icon" href={favicon} />
 	<title>Flyhaj</title>
+
 </svelte:head>
-{@render children()}
+<div class="min-h-screen bg-[url('../lib/assets/space.jpg')] bg-cover bg-center bg-no-repeat">
+  	{@render children()}
+</div>
