@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import Quaternion from "quaternion";
   import { io } from "socket.io-client";
+  import euan from "$lib/assets/euanbread.jpg";
 
   const socket = io();
 
@@ -27,6 +28,7 @@
   let firstJerk = $state(0);
 
   let lastThrowTime: number | null = $state(null);
+  let lastThrowEndTime: number | null = $state(null);
   let lastLandTime: number | null = $state(null);
   let airTime: number | null = $state(null);
 
@@ -97,15 +99,19 @@
           currentAccel <= 11
         ) {
           phase = 2;
+          lastThrowEndTime = now;
         }
       } else if (phase === 2) {
         if (jerk > LAND_JERK_THRESHOLD && jerkY < 10000) {
           phase = 0;
           lastLandTime = now;
 
-          airTime = lastThrowTime ? now - lastThrowTime : null;
+          airTime = now - lastThrowEndTime!;
 
-          socket.emit("landed", { airTime })
+          socket.emit("landed", {
+            airTime,
+            throwTime: lastThrowEndTime! - lastThrowTime!,
+          });
         }
       }
 
@@ -223,6 +229,7 @@
     firstJerk = 0;
 
     lastThrowTime = null;
+    lastThrowEndTime = null;
     lastLandTime = null;
     airTime = null;
 
@@ -250,8 +257,16 @@
   }
 </script>
 
+<div class="absolute top-0 left-0 w-full h-full bg-white"></div>
+
+<img
+  src={euan}
+  class="absolute top-0 left-0 w-full h-full opacity-60"
+  alt="euan"
+/>
+
 <div
-  class="p-2"
+  class="p-2 z-5 absolute w-full"
   class:bg-yellow-300={phase === 1}
   class:bg-green-300={phase === 2}
 >
