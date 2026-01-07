@@ -108,7 +108,10 @@
 
           airTime = now - lastThrowEndTime!;
 
-          socket.emit("landed", { airTime, throwTime: lastThrowEndTime! - lastThrowTime! });
+          socket.emit("landed", {
+            airTime,
+            throwTime: lastThrowEndTime! - lastThrowTime!,
+          });
         }
       }
 
@@ -254,7 +257,13 @@
   }
 </script>
 
-<img src={euan} class="absolute top-0 left-0 w-full h-full opacity-60" alt="euan" />
+<div class="absolute top-0 left-0 w-full h-full bg-white"></div>
+
+<img
+  src={euan}
+  class="absolute top-0 left-0 w-full h-full opacity-60"
+  alt="euan"
+/>
 
 <div
   class="p-2 z-5 absolute w-full"
