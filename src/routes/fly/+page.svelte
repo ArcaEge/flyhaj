@@ -30,31 +30,6 @@
 	import impact9 from '$lib/assets/sounds/impact/9.wav?url';
 	import impact10 from '$lib/assets/sounds/impact/10.wav?url';
 
-	const AUDIO_COMMENT = [comment1, comment2, comment3, comment4, comment5, comment6, comment7];
-	const AUDIO_FLY = [fly1, fly2, fly3, fly4, fly5, fly6, fly7];
-	const AUDIO_IMPACT = [
-		impact1,
-		impact2,
-		impact3,
-		impact4,
-		impact5,
-		impact6,
-		impact7,
-		impact8,
-		impact9,
-		impact10
-	];
-
-	const audioFiles = import.meta.glob(comment1, {
-		eager: true,
-		as: 'url'
-	});
-	let currentAudio = null;
-	function play(url: String) {
-		if (currentAudio) currentAudio.pause();
-		currentAudio = new Audio(url);
-	}
-
 	const socket = io();
 	socket.emit('phone');
 
@@ -69,7 +44,6 @@
 	const MIN_THROW_TIME_MS = 40;
 	const MAX_FLY_TIME_MS = 2000;
 	const MIN_FLY_TIME_MS = 120;
-	// const MAX_CO
 
 	let accel: number | null = $state(null);
 	let accelY: number | null = $state(null);
@@ -118,6 +92,40 @@
 	onMount(async () => {
 		const audioCtx = new AudioContext();
 
+		const AUDIO_COMMENT = [
+			await getAudioBuffer(comment1),
+			await getAudioBuffer(comment2),
+			await getAudioBuffer(comment3),
+			await getAudioBuffer(comment4),
+			await getAudioBuffer(comment5),
+			await getAudioBuffer(comment6),
+			await getAudioBuffer(comment7)
+		];
+		const AUDIO_FLY = [
+			await getAudioBuffer(fly1),
+			await getAudioBuffer(fly2),
+			await getAudioBuffer(fly3),
+			await getAudioBuffer(fly4),
+			await getAudioBuffer(fly5),
+			await getAudioBuffer(fly6),
+			await getAudioBuffer(fly7)
+		];
+		const AUDIO_IMPACT = [
+			await getAudioBuffer(impact1),
+			await getAudioBuffer(impact2),
+			await getAudioBuffer(impact3),
+			await getAudioBuffer(impact4),
+			await getAudioBuffer(impact5),
+			await getAudioBuffer(impact6),
+			await getAudioBuffer(impact7),
+			await getAudioBuffer(impact8),
+			await getAudioBuffer(impact9),
+			await getAudioBuffer(impact10)
+		];
+
+		let currentFlyingAudio: number | null = null;
+		let currentFlyingAudioSource: AudioBufferSourceNode | null = null;
+
 		function handleMotionEvent(event: any) {
 			const currentAccel = Math.sqrt(
 				event.acceleration.x ** 2 + event.acceleration.y ** 2 + event.acceleration.z ** 2
@@ -161,11 +169,16 @@
 					lastThrowEndTime = now;
 
 					socket.emit('fly');
+
+					currentFlyingAudio = Math.floor(Math.random() * AUDIO_FLY.length);
+					currentFlyingAudioSource = getAudioSource(AUDIO_FLY[currentFlyingAudio!]);
+					currentFlyingAudioSource.start();
 				}
 
 				if (now - lastThrowTime! > MAX_THROW_TIME_MS) {
 					phase = 0;
 					socket.emit('land', { cancelled: true });
+					currentFlyingAudioSource?.stop();
 				}
 			} else if (phase === 2) {
 				// flying
@@ -181,6 +194,8 @@
 						valid: airTime > MIN_FLY_TIME_MS,
 						cancelled: false
 					});
+
+					currentFlyingAudioSource?.stop();
 				} else {
 					if (avgAccel == 0) {
 						avgAccel = currentAccel;
@@ -195,6 +210,8 @@
 					socket.emit('land', {
 						cancelled: true
 					});
+
+					currentFlyingAudioSource?.stop();
 				}
 			}
 
@@ -217,23 +234,23 @@
 
 			// console.log(currentAccel);
 
-			if (7 <= currentAccel && currentAccel <= 13) {
-				if (!oscillatorState) {
-					oscillator = audioCtx.createOscillator();
+			// if (7 <= currentAccel && currentAccel <= 13) {
+			// 	if (!oscillatorState) {
+			// 		oscillator = audioCtx.createOscillator();
 
-					oscillator.type = 'sine';
-					oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
-					oscillator.connect(audioCtx.destination);
+			// 		oscillator.type = 'sine';
+			// 		oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+			// 		oscillator.connect(audioCtx.destination);
 
-					oscillator.start();
-					oscillatorState = true;
-				}
-			} else {
-				if (oscillatorState && oscillator) {
-					oscillator.stop();
-					oscillatorState = false;
-				}
-			}
+			// 		oscillator.start();
+			// 		oscillatorState = true;
+			// 	}
+			// } else {
+			// 	if (oscillatorState && oscillator) {
+			// 		oscillator.stop();
+			// 		oscillatorState = false;
+			// 	}
+			// }
 
 			if (Math.abs(rotatedAccelX) > rotatedAccelXMax) {
 				rotatedAccelXMax = Math.abs(rotatedAccelX);
@@ -286,6 +303,19 @@
 			angleAlpha = event.alpha;
 			angleBeta = event.beta;
 			angleGamma = event.gamma;
+		}
+
+		async function getAudioBuffer(url: string) {
+			const response = await fetch(url);
+			const arrayBuffer = await response.arrayBuffer();
+			return await audioCtx.decodeAudioData(arrayBuffer);
+		}
+
+		function getAudioSource(buffer: AudioBuffer) {
+			const source = audioCtx.createBufferSource();
+			source.buffer = buffer;
+			source.connect(audioCtx.destination);
+			return source;
 		}
 
 		window.addEventListener('devicemotion', handleMotionEvent);
