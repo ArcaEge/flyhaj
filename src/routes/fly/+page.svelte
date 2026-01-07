@@ -1,6 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import Quaternion from "quaternion";
+  import { io } from "socket.io-client";
+
+  const socket = io();
+
+  socket.on("reset", reset);
 
   const THROW_JERK_THRESHOLD = 0.1;
   const THROW_ACCEL_THRESHOLD = 1.5;
@@ -99,6 +104,8 @@
           lastLandTime = now;
 
           airTime = lastThrowTime ? now - lastThrowTime : null;
+
+          socket.emit("landed", { airTime })
         }
       }
 
@@ -201,6 +208,46 @@
     window.addEventListener("devicemotion", handleMotionEvent);
     window.addEventListener("deviceorientation", handleOrientationEvent);
   });
+
+  function reset() {
+    accel = null;
+    accelY = null;
+    maxAccel = 0;
+    accelTime = 0;
+
+    phase = 0;
+
+    jerk = 0;
+    jerkY = 0;
+    maxJerk = 0;
+    firstJerk = 0;
+
+    lastThrowTime = null;
+    lastLandTime = null;
+    airTime = null;
+
+    angleAlpha = 0;
+    angleBeta = 0;
+    angleGamma = 0;
+
+    rotatedAccelX = 0;
+    rotatedAccelY = 0;
+    rotatedAccelZ = 0;
+
+    rotatedAccelXMax = 0;
+    rotatedAccelYMax = 0;
+    rotatedAccelZMax = 0;
+
+    velX = 0;
+    velY = 0;
+    velZ = 0;
+    velOverall = 0;
+
+    velXMax = 0;
+    velYMax = 0;
+    velZMax = 0;
+    velOverallMax = 0;
+  }
 </script>
 
 <div
@@ -212,45 +259,7 @@
 
   <button
     class="block bg-amber-900 text-amber-50 p-2 my-2 rounded-lg"
-    onclick={() => {
-      accel = null;
-      accelY = null;
-      maxAccel = 0;
-      accelTime = 0;
-
-      phase = 0;
-
-      jerk = 0;
-      jerkY = 0;
-      maxJerk = 0;
-      firstJerk = 0;
-
-      lastThrowTime = null;
-      lastLandTime = null;
-      airTime = null;
-
-      angleAlpha = 0;
-      angleBeta = 0;
-      angleGamma = 0;
-
-      rotatedAccelX = 0;
-      rotatedAccelY = 0;
-      rotatedAccelZ = 0;
-
-      rotatedAccelXMax = 0;
-      rotatedAccelYMax = 0;
-      rotatedAccelZMax = 0;
-
-      velX = 0;
-      velY = 0;
-      velZ = 0;
-      velOverall = 0;
-
-      velXMax = 0;
-      velYMax = 0;
-      velZMax = 0;
-      velOverallMax = 0;
-    }}>reset</button
+    onclick={reset}>reset</button
   >
 
   accel: {accel}

@@ -13,6 +13,7 @@
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^7.0.0",
+		"@sveltejs/adapter-node": "^5.4.0",
 		"@sveltejs/kit": "^2.49.1",
 		"@sveltejs/vite-plugin-svelte": "^6.2.1",
 		"@tailwindcss/vite": "^4.1.17",
@@ -24,6 +25,9 @@
 		"vite": "^7.2.6"
 	},
 	"dependencies": {
-		"quaternion": "^1.2.1"
+		"express": "^5.2.1",
+		"quaternion": "^1.2.1",
+		"socket.io": "^4.8.3",
+		"socket.io-client": "^4.8.3"
 	}
 }
