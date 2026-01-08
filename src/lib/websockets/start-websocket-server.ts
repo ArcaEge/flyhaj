@@ -34,10 +34,15 @@ export const startWebsocketServer = async (httpServer: any) => {
         flyingSocket?.emit("reset");
       }
     });
-
-    socket.on("throw", async () => {
-      if (connectionType === 2) {
-        laptopSocket?.emit("throw");
+    
+    socket.on("moan", async (data) => {
+      if (connectionType === 1) {
+        flyingSocket?.emit("moan");
+      }
+    });
+    socket.on("nomoan", async (data) => {
+      if (connectionType === 1) {
+        flyingSocket?.emit("nomoan");
       }
     });
 
@@ -48,6 +53,13 @@ export const startWebsocketServer = async (httpServer: any) => {
       }
     });
 
+    
+    socket.on("throw", async () => {
+      if (connectionType === 2) {
+        laptopSocket?.emit("throw");
+      }
+    });
+    
     socket.on("fly", async () => {
       if (connectionType === 2) {
         laptopSocket?.emit("fly");

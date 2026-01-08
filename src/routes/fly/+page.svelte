@@ -19,6 +19,7 @@
 	import fly5 from '$lib/assets/sounds/fly/5.mp3?url';
 	import fly6 from '$lib/assets/sounds/fly/6.mp3?url';
 	import fly7 from '$lib/assets/sounds/fly/7.mp3?url';
+	import fly8 from '$lib/assets/sounds/fly/8.mp3?url';
 	import moan1 from '$lib/assets/sounds/moan/1.mp3?url';
 	import moan2 from '$lib/assets/sounds/moan/2.mp3?url';
 	import moan3 from '$lib/assets/sounds/moan/3.mp3?url';
@@ -50,7 +51,13 @@
 	// 0 = idle, 1 = throwing, 2 = wheeeee
 	let phase = $state(0);
 
-	let moanMode = $state(true);
+	let leoMode = $state(false);
+	socket.on('moan', () => {
+		leoMode = true;
+	});
+	socket.on('nomoan', () => {
+		leoMode = false;
+	});
 
 	let jerk = $state(0);
 	let jerkY = $state(0);
@@ -103,7 +110,8 @@
 			await getAudioBuffer(fly4),
 			await getAudioBuffer(fly5),
 			await getAudioBuffer(fly6),
-			await getAudioBuffer(fly7)
+			await getAudioBuffer(fly7),
+			await getAudioBuffer(fly8)
 		];
 		const AUDIO_MOAN = [
 			await getAudioBuffer(moan1),
@@ -164,7 +172,7 @@
 
 					socket.emit('fly');
 
-					let audioArr = moanMode ? AUDIO_MOAN : AUDIO_FLY;
+					let audioArr = leoMode ? AUDIO_MOAN : AUDIO_FLY;
 					let currentFlyingAudio = Math.floor(Math.random() * audioArr.length);
 					currentFlyingAudioSource = getAudioSource(audioArr[currentFlyingAudio]);
 					currentFlyingAudioSource.start();
@@ -323,7 +331,6 @@
 		accelTime = 0;
 
 		phase = 0;
-		moanMode = false;
 
 		jerk = 0;
 		jerkY = 0;
