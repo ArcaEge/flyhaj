@@ -25,6 +25,9 @@
 	import moan3 from '$lib/assets/sounds/moan/3.mp3?url';
 	import moan4 from '$lib/assets/sounds/moan/4.mp3?url';
 	import moan5 from '$lib/assets/sounds/moan/5.mp3?url';
+	import anthem1 from '$lib/assets/sounds/anthem/1.mp3?url';
+	import anthem2 from '$lib/assets/sounds/anthem/2.mp3?url';
+	import anthem3 from '$lib/assets/sounds/anthem/3.mp3?url';
 
 	const socket = io();
 	socket.emit('phone');
@@ -39,9 +42,10 @@
 	const DEBOUNCE_THROW_TIME_MS = 2500;
 	const MAX_THROW_TIME_MS = 500;
 	const MIN_THROW_TIME_MS = 50;
-	const MAX_FLY_TIME_MS = 2000;
+	const MAX_FLY_TIME_MS = 3000;
 	const MIN_FLY_TIME_MS = 120;
 
+	let active = $state(false);
 	let accel: number | null = $state(null);
 	let accelY: number | null = $state(null);
 	let maxAccel = $state(0);
@@ -57,6 +61,12 @@
 	});
 	socket.on('nomoan', () => {
 		leoMode = false;
+	});
+	socket.on('active', () => {
+		active = true;
+	});
+	socket.on('inactive', () => {
+		active = false;
 	});
 
 	let jerk = $state(0);
@@ -120,8 +130,14 @@
 			await getAudioBuffer(moan4),
 			await getAudioBuffer(moan5)
 		];
+		const AUDIO_ANTHEM = [
+			await getAudioBuffer(anthem1),
+			await getAudioBuffer(anthem2),
+			await getAudioBuffer(anthem3)
+		];
 
 		let currentFlyingAudioSource: AudioBufferSourceNode | null = null;
+		let currentLandedAudioSource: AudioBufferSourceNode | null = null;
 
 		function handleMotionEvent(event: any) {
 			const currentAccel = Math.sqrt(
@@ -152,12 +168,15 @@
 					jerk > THROW_JERK_THRESHOLD &&
 					jerk < THROW_MAX_JERK_THRESHOLD &&
 					currentAccel > THROW_ACCEL_THRESHOLD &&
-					(!lastLandTime || now - lastLandTime >= DEBOUNCE_THROW_TIME_MS)
+					(!lastLandTime || now - lastLandTime >= DEBOUNCE_THROW_TIME_MS) &&
+					active
 				) {
 					phase = 1;
 					lastThrowTime = now;
 
 					socket.emit('throw');
+
+					currentLandedAudioSource?.stop();
 				}
 			} else if (phase === 1) {
 				// throwing
@@ -198,6 +217,17 @@
 						valid,
 						cancelled: false
 					});
+
+					if (valid && airTime > 700) {
+						if (airTime > 1100) {
+							let currentLandedAudio = Math.floor(Math.random() * AUDIO_ANTHEM.length);
+							currentLandedAudioSource = getAudioSource(AUDIO_ANTHEM[currentLandedAudio]);
+						} else {
+							let currentLandedAudio = Math.floor(Math.random() * AUDIO_COMMENT.length);
+							currentLandedAudioSource = getAudioSource(AUDIO_COMMENT[currentLandedAudio]);
+						}
+						currentLandedAudioSource.start();
+					}
 				}
 
 				if (now - lastThrowEndTime! > MAX_FLY_TIME_MS) {
