@@ -50,7 +50,18 @@
 						>
 						<p class="text-lg text-blue-50 flex justify-center items-center">State: {state}</p>
 					</div>
-					<div class="grid grid-cols-2 p-3 gap-3">
+					<label class="grid grid-cols-2 p-3 gap-3">
+						<input
+							type="checkbox"
+							onchange={(e) => {
+								const el = /** @type {HTMLInputElement} */ (e.currentTarget);
+								if (el.checked) socket.emit("active");
+								else socket.emit("inactive");
+							}}
+							>
+						<p class="text-lg text-blue-50 flex justify-center items-center">Active</p>
+					</label>
+					<label class="grid grid-cols-2 p-3 gap-3">
 						<input
 							type="checkbox"
 							onchange={(e) => {
@@ -60,7 +71,7 @@
 							}}
 							>
 						<p class="text-lg text-blue-50 flex justify-center items-center">Leo mode</p>
-					</div>
+					</label>
 
 
 				</div>

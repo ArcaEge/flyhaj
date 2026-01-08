@@ -45,6 +45,17 @@ export const startWebsocketServer = async (httpServer: any) => {
         flyingSocket?.emit("nomoan");
       }
     });
+    
+    socket.on("active", async (data) => {
+      if (connectionType === 1) {
+        flyingSocket?.emit("active");
+      }
+    });
+    socket.on("inactive", async (data) => {
+      if (connectionType === 1) {
+        flyingSocket?.emit("inactive");
+      }
+    });
 
 
     socket.on("data", async (data) => {
