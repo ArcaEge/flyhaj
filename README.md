@@ -8,10 +8,13 @@ prepare your arm, and Blahaj for the greatest and most deadly throwing game of y
 
 # How to deploy yourself
 
+```bash
+docker run -p 3000:3000 ghcr.io/arcaege/flyhaj:production
+```
+
 # basic instructions
 
-the mobile client is the device used to mesure your throwing power. This uses your acceleromiter in yout phone to accuratly 
+the mobile client is the device used to mesure your throwing power. This uses your accelerometer in yout phone to accurately
 find out your arms strength in throwing, The desktop client is where leaderboards, settings and statitistics is displayed.
 
-We recommed stuffing your phone inside of a lovely (consenting) Blahaj of your choice for extra quality and realism.
-
+We recommend stuffing your phone inside of a lovely (consenting) Blahaj of your choice for extra quality and realism.
