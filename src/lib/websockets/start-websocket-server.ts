@@ -35,10 +35,16 @@ export const startWebsocketServer = async (httpServer: any) => {
       }
     });
 
-
     socket.on("throw", async () => {
       if (connectionType === 2) {
         laptopSocket?.emit("throw");
+      }
+    });
+
+
+    socket.on("data", async (data) => {
+      if (connectionType === 2) {
+        console.log(data);
       }
     });
 
