@@ -24,14 +24,19 @@
 	class="min-h-screen bg-[url('../lib/assets/space.jpg')] bg-center bg-no-repeat flex flex-row justify-between"
 >
 	<div>
-		<div class="top-25">
-			<img class="w-150" src={header} />
+		<div class="top-25 flex flex-row p-10 ">
+			<img class="w-1/3 h-fit" src={header} />
+			<div class="pl-10">
+				<div class="bg-blue-800 rounded-xl border border-blue-400 h-90">
+					<h1 class="p-5 font-sans font-extrabold text-blue-400">Leaderboard</h1>
+					<hr class="w-100% text-blue-400" />
+				</div>
+			</div>
 		</div>
-
-		<img class="bottom-0 h-1/2 p-10" src={globe} />
+		<img class="bottom-0 h-1/2 p-10 w-2/3" src={globe} />
 	</div>
 
-		<div class="absolute right-0 p-10 h-full">
+		<div class="absolute right-0 p-10 h-full w-1/3">
 			<div class="flex flex-col justify-between">
 				<div class="bg-blue-800 h-90 rounded-xl border border-blue-400">
 					<h1 class="p-5 font-sans font-extrabold text-blue-400">Leaderboard</h1>
