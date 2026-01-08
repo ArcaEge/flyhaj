@@ -12,6 +12,6 @@
   }
 
   .button {
-    @apply bg-blue-500 rounded-xl h-12 text-blue-50 hover:bg-blue-400 transition-colors hover:cursor-pointer text-lg;
+    @apply bg-blue-500 rounded-xl h-12 text-blue-50 hover:bg-blue-400 transition-colors hover:cursor-pointer text-lg disabled:hover:cursor-not-allowed;
   }
 }

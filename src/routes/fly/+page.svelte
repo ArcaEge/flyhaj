@@ -38,7 +38,7 @@
 	const THROW_MAX_JERK_THRESHOLD = 0.6;
 	const THROW_ACCEL_THRESHOLD = 3.5;
 	const THROW_END_JERK_THRESHOLD = 0.008;
-	const LAND_JERK_THRESHOLD = 0.2;
+	const LAND_JERK_THRESHOLD = 0.3;
 	const DEBOUNCE_THROW_TIME_MS = 2500;
 	const MAX_THROW_TIME_MS = 500;
 	const MIN_THROW_TIME_MS = 50;
@@ -203,7 +203,7 @@
 				}
 			} else if (phase === 2) {
 				// flying
-				if ((jerk > LAND_JERK_THRESHOLD && jerkY < 10000) || avgAccel < 8 || avgAccel > 12) {
+				if ((jerk > LAND_JERK_THRESHOLD && jerkY < 10000) || avgAccel < 7 || avgAccel > 13) {
 					phase = 0;
 
 					airTime = now - lastThrowEndTime!;
