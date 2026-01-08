@@ -1,38 +1,17 @@
 # Flyhaj
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+<img width="1800" height="1200" alt="shark" src="https://github.com/user-attachments/assets/b220026e-5021-4029-ba75-4f2c4b9f8b04" />
 
-## Creating a project
+would you like to experience the great power of Blahaj? Would you like to become a master throwing machine? <br>
+well look no further! With the latest, and  **GREATEST** throwing technology ready to assist your massive lunges,
+prepare your arm, and Blahaj for the greatest and most deadly throwing game of your life!
 
-If you're seeing this, you've probably already done this step. Congrats!
+# How to deploy yourself
 
-```sh
-# create a new project in the current directory
-npx sv create
+# basic instructions
 
-# create a new project in my-app
-npx sv create my-app
-```
+the mobile client is the device used to mesure your throwing power. This uses your acceleromiter in yout phone to accuratly 
+find out your arms strength in throwing, The desktop client is where leaderboards, settings and statitistics is displayed.
 
-## Developing
+We recommed stuffing your phone inside of a lovely (consenting) Blahaj of your choice for extra quality and realism.
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
