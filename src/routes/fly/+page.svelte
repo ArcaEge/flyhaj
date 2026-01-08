@@ -5,30 +5,25 @@
 	import euan from '$lib/assets/euanbread.jpg';
 
 	// Sounds
-	import comment1 from '$lib/assets/sounds/comment/1.wav?url';
-	import comment2 from '$lib/assets/sounds/comment/2.wav?url';
-	import comment3 from '$lib/assets/sounds/comment/3.wav?url';
-	import comment4 from '$lib/assets/sounds/comment/4.wav?url';
-	import comment5 from '$lib/assets/sounds/comment/5.wav?url';
-	import comment6 from '$lib/assets/sounds/comment/6.wav?url';
-	import comment7 from '$lib/assets/sounds/comment/7.wav?url';
-	import fly1 from '$lib/assets/sounds/fly/1.wav?url';
-	import fly2 from '$lib/assets/sounds/fly/2.wav?url';
-	import fly3 from '$lib/assets/sounds/fly/3.wav?url';
-	import fly4 from '$lib/assets/sounds/fly/4.wav?url';
-	import fly5 from '$lib/assets/sounds/fly/5.wav?url';
-	import fly6 from '$lib/assets/sounds/fly/6.wav?url';
-	import fly7 from '$lib/assets/sounds/fly/7.wav?url';
-	import impact1 from '$lib/assets/sounds/impact/1.wav?url';
-	import impact2 from '$lib/assets/sounds/impact/2.wav?url';
-	import impact3 from '$lib/assets/sounds/impact/3.wav?url';
-	import impact4 from '$lib/assets/sounds/impact/4.wav?url';
-	import impact5 from '$lib/assets/sounds/impact/5.wav?url';
-	import impact6 from '$lib/assets/sounds/impact/6.wav?url';
-	import impact7 from '$lib/assets/sounds/impact/7.wav?url';
-	import impact8 from '$lib/assets/sounds/impact/8.wav?url';
-	import impact9 from '$lib/assets/sounds/impact/9.wav?url';
-	import impact10 from '$lib/assets/sounds/impact/10.wav?url';
+	import comment1 from '$lib/assets/sounds/comment/1.mp3?url';
+	import comment2 from '$lib/assets/sounds/comment/2.mp3?url';
+	import comment3 from '$lib/assets/sounds/comment/3.mp3?url';
+	import comment4 from '$lib/assets/sounds/comment/4.mp3?url';
+	import comment5 from '$lib/assets/sounds/comment/5.mp3?url';
+	import comment6 from '$lib/assets/sounds/comment/6.mp3?url';
+	import comment7 from '$lib/assets/sounds/comment/7.mp3?url';
+	import fly1 from '$lib/assets/sounds/fly/1.mp3?url';
+	import fly2 from '$lib/assets/sounds/fly/2.mp3?url';
+	import fly3 from '$lib/assets/sounds/fly/3.mp3?url';
+	import fly4 from '$lib/assets/sounds/fly/4.mp3?url';
+	import fly5 from '$lib/assets/sounds/fly/5.mp3?url';
+	import fly6 from '$lib/assets/sounds/fly/6.mp3?url';
+	import fly7 from '$lib/assets/sounds/fly/7.mp3?url';
+	import moan1 from '$lib/assets/sounds/moan/1.mp3?url';
+	import moan2 from '$lib/assets/sounds/moan/2.mp3?url';
+	import moan3 from '$lib/assets/sounds/moan/3.mp3?url';
+	import moan4 from '$lib/assets/sounds/moan/4.mp3?url';
+	import moan5 from '$lib/assets/sounds/moan/5.mp3?url';
 
 	const socket = io();
 	socket.emit('phone');
@@ -36,12 +31,13 @@
 	socket.on('reset', reset);
 
 	const THROW_JERK_THRESHOLD = 0.05;
+	const THROW_MAX_JERK_THRESHOLD = 0.6;
 	const THROW_ACCEL_THRESHOLD = 3.5;
 	const THROW_END_JERK_THRESHOLD = 0.008;
 	const LAND_JERK_THRESHOLD = 0.2;
-	const DEBOUNCE_THROW_TIME_MS = 3000;
+	const DEBOUNCE_THROW_TIME_MS = 2500;
 	const MAX_THROW_TIME_MS = 500;
-	const MIN_THROW_TIME_MS = 40;
+	const MIN_THROW_TIME_MS = 50;
 	const MAX_FLY_TIME_MS = 2000;
 	const MIN_FLY_TIME_MS = 120;
 
@@ -53,6 +49,8 @@
 
 	// 0 = idle, 1 = throwing, 2 = wheeeee
 	let phase = $state(0);
+
+	let moanMode = $state(true);
 
 	let jerk = $state(0);
 	let jerkY = $state(0);
@@ -86,9 +84,6 @@
 	let velZMax = $state(0);
 	let velOverallMax = $state(0);
 
-	let oscillator: OscillatorNode | null = $state(null);
-	let oscillatorState = false;
-
 	onMount(async () => {
 		const audioCtx = new AudioContext();
 
@@ -110,20 +105,14 @@
 			await getAudioBuffer(fly6),
 			await getAudioBuffer(fly7)
 		];
-		const AUDIO_IMPACT = [
-			await getAudioBuffer(impact1),
-			await getAudioBuffer(impact2),
-			await getAudioBuffer(impact3),
-			await getAudioBuffer(impact4),
-			await getAudioBuffer(impact5),
-			await getAudioBuffer(impact6),
-			await getAudioBuffer(impact7),
-			await getAudioBuffer(impact8),
-			await getAudioBuffer(impact9),
-			await getAudioBuffer(impact10)
+		const AUDIO_MOAN = [
+			await getAudioBuffer(moan1),
+			await getAudioBuffer(moan2),
+			await getAudioBuffer(moan3),
+			await getAudioBuffer(moan4),
+			await getAudioBuffer(moan5)
 		];
 
-		let currentFlyingAudio: number | null = null;
 		let currentFlyingAudioSource: AudioBufferSourceNode | null = null;
 
 		function handleMotionEvent(event: any) {
@@ -142,14 +131,19 @@
 				jerkY = Math.abs(event.acceleration.y - accelY) * ((accelTime - lastTime) / 1000);
 			}
 
+			if (avgAccel === 0) avgAccel = currentAccel;
+			avgAccel = currentAccel * 0.15 + avgAccel * 0.85;
+
 			// Phases
 			let now = Date.now();
 			if (phase === 0) {
 				// idle
+				currentFlyingAudioSource?.stop();
+
 				if (
 					jerk > THROW_JERK_THRESHOLD &&
+					jerk < THROW_MAX_JERK_THRESHOLD &&
 					currentAccel > THROW_ACCEL_THRESHOLD &&
-					jerk < 100000 &&
 					(!lastLandTime || now - lastLandTime >= DEBOUNCE_THROW_TIME_MS)
 				) {
 					phase = 1;
@@ -161,8 +155,8 @@
 				// throwing
 				if (
 					jerk < THROW_END_JERK_THRESHOLD &&
-					7 <= currentAccel &&
-					currentAccel <= 11 &&
+					5 <= avgAccel &&
+					avgAccel <= 12 &&
 					now - lastThrowTime! > MIN_THROW_TIME_MS
 				) {
 					phase = 2;
@@ -170,38 +164,32 @@
 
 					socket.emit('fly');
 
-					currentFlyingAudio = Math.floor(Math.random() * AUDIO_FLY.length);
-					currentFlyingAudioSource = getAudioSource(AUDIO_FLY[currentFlyingAudio!]);
+					let audioArr = moanMode ? AUDIO_MOAN : AUDIO_FLY;
+					let currentFlyingAudio = Math.floor(Math.random() * audioArr.length);
+					currentFlyingAudioSource = getAudioSource(audioArr[currentFlyingAudio]);
 					currentFlyingAudioSource.start();
 				}
 
 				if (now - lastThrowTime! > MAX_THROW_TIME_MS) {
 					phase = 0;
 					socket.emit('land', { cancelled: true });
-					currentFlyingAudioSource?.stop();
 				}
 			} else if (phase === 2) {
 				// flying
-				if (jerk > LAND_JERK_THRESHOLD && jerkY < 10000) {
+				if ((jerk > LAND_JERK_THRESHOLD && jerkY < 10000) || avgAccel < 8 || avgAccel > 12) {
 					phase = 0;
-					lastLandTime = now;
 
 					airTime = now - lastThrowEndTime!;
+					const valid = airTime > MIN_FLY_TIME_MS;
+
+					if (valid) lastLandTime = now;
 
 					socket.emit('land', {
 						airTime,
 						throwTime: lastThrowEndTime! - lastThrowTime!,
-						valid: airTime > MIN_FLY_TIME_MS,
+						valid,
 						cancelled: false
 					});
-
-					currentFlyingAudioSource?.stop();
-				} else {
-					if (avgAccel == 0) {
-						avgAccel = currentAccel;
-					} else {
-						avgAccel = (avgAccel + currentAccel) / 2;
-					}
 				}
 
 				if (now - lastThrowEndTime! > MAX_FLY_TIME_MS) {
@@ -210,10 +198,15 @@
 					socket.emit('land', {
 						cancelled: true
 					});
-
-					currentFlyingAudioSource?.stop();
 				}
 			}
+
+			// if (phase !== 0) {
+			// 	socket.emit(
+			// 		'data',
+			// 		`${now},${rotatedAccelX},${rotatedAccelY},${rotatedAccelZ},${currentAccel}`
+			// 	);
+			// }
 
 			// Magic quarternion shit to calculate global acceleration
 			const a = angleAlpha * (Math.PI / 180);
@@ -330,6 +323,7 @@
 		accelTime = 0;
 
 		phase = 0;
+		moanMode = false;
 
 		jerk = 0;
 		jerkY = 0;

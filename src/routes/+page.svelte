@@ -18,16 +18,18 @@
 		state = 'idle';
 	});
 </script>
-<div class="flex flex-row justify-between"></div>
-	<div class="min-h-screen bg-[url('../lib/assets/space.jpg')] bg-center bg-no-repeat flex flex-row justify-between">
-		<div>
-			<div class="top-25">
-				<img class="w-150" src={header} />
-			</div>
 
-			<img class="bottom-0 h-1/2 p-10" src={globe} />
+<div class="flex flex-row justify-between"></div>
+<div
+	class="min-h-screen bg-[url('../lib/assets/space.jpg')] bg-center bg-no-repeat flex flex-row justify-between"
+>
+	<div>
+		<div class="top-25">
+			<img class="w-150" src={header} />
 		</div>
 
+		<img class="bottom-0 h-1/2 p-10" src={globe} />
+	</div>
 
 		<div class="absolute right-0 p-10 h-full">
 			<div class="flex flex-col justify-between">
