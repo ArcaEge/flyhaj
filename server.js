@@ -1,7 +1,7 @@
 import express from 'express';
 import { handler } from './build/handler.js';
 import http from 'http';
-// import startWebsocketServer from '$lib/'
+import {startWebsocketServer} from './start-websocket-server.ts'
 
 const app = express();
 const server = http.createServer(app);
