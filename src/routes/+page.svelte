@@ -48,6 +48,19 @@
 						>
 						<p class="text-lg text-blue-50 flex justify-center items-center">State: {state}</p>
 					</div>
+					<div class="grid grid-cols-2 p-3 gap-3">
+						<input
+							type="checkbox"
+							onchange={(e) => {
+								const el = /** @type {HTMLInputElement} */ (e.currentTarget);
+								if (el.checked) socket.emit("moan");
+								else socket.emit("nomoan");
+							}}
+							>
+						<p class="text-lg text-blue-50 flex justify-center items-center">Leo mode</p>
+					</div>
+
+
 				</div>
 			</div>
 		</div>
